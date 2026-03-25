@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service History — MechPartner</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body data-page="service-history">
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+        <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+
+        <main class="main-content">
+            <div class="page-header animate-fade-in">
+                <div style="display: flex; align-items: center;">
+                    <button class="btn-back" onclick="history.back()"></button>
+                    <div>
+                        <h1>Service History</h1>
+                        <p>View all your past service requests</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="serviceList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading service history...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/bot.js"></script>
+    <script src="js/user.js"></script>
+</body>
+
+</html>

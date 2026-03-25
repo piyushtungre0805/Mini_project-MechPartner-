@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile — MechPartner</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body data-page="user-profile">
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+        <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+
+        <main class="main-content">
+            <div class="page-header animate-fade-in">
+                <div style="display: flex; align-items: center;">
+                    <button class="btn-back" onclick="history.back()"></button>
+                    <div>
+                        <h1>My Profile</h1>
+                        <p>Manage your account details</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-grid">
+                <!-- Profile Sidebar -->
+                <div class="card profile-sidebar animate-fade-in-up">
+                    <div class="profile-avatar" id="profileAvatar">U</div>
+                    <h2 id="profileName" class="mt-1">Loading...</h2>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;" id="profileEmail">—</p>
+                    <div class="mt-2" style="text-align: left;">
+                        <div class="mechanic-info-item mb-1">
+                            <span class="info-icon">📱</span>
+                            <span id="profilePhone">—</span>
+                        </div>
+                        <div class="mechanic-info-item mb-1">
+                            <span class="info-icon">📍</span>
+                            <span id="profileAddress">—</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-block mt-2" id="updateLocationBtn">📍 Update Location</button>
+                </div>
+
+                <!-- Profile Edit Forms -->
+                <div>
+                    <!-- Edit Profile -->
+                    <div class="card mb-2 animate-fade-in-up" style="animation-delay: 0.1s;">
+                        <div class="card-header">
+                            <h2 class="card-title">Edit Profile</h2>
+                        </div>
+                        <form id="profileForm" enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label for="editName">Full Name</label>
+                                <input type="text" class="form-control" id="editName" name="name">
+                            </div>
+                            <div class="form-group">
+                                <label for="editPhone">Phone Number</label>
+                                <input type="tel" class="form-control" id="editPhone" name="phone">
+                            </div>
+                            <div class="form-group">
+                                <label for="editAddress">Address</label>
+                                <input type="text" class="form-control" id="editAddress" name="address">
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label>Update Profile Photo</label>
+                                    <div class="file-upload">
+                                        <div class="file-upload-icon">📸</div>
+                                        <div class="file-name" id="profilePhotoLabel">No file chosen</div>
+                                        <input type="file" name="profilePhoto" id="profilePhoto" accept="image/*">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Update Aadhar Card</label>
+                                    <div class="file-upload">
+                                        <div class="file-upload-icon">🪪</div>
+                                        <div class="file-name" id="aadharCardLabel">No file chosen</div>
+                                        <input type="file" name="aadharCard" id="aadharCard" accept="image/*">
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+
+                    <!-- Change Password -->
+                    <div class="card animate-fade-in-up" style="animation-delay: 0.2s;">
+                        <div class="card-header">
+                            <h2 class="card-title">Change Password</h2>
+                        </div>
+                        <form id="passwordForm">
+                            <div class="form-group">
+                                <label for="currentPassword">Current Password</label>
+                                <input type="password" class="form-control" id="currentPassword" required>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="newPassword">New Password</label>
+                                    <input type="password" class="form-control" id="newPassword" required minlength="6">
+                                </div>
+                                <div class="form-group">
+                                    <label for="confirmPassword">Confirm Password</label>
+                                    <input type="password" class="form-control" id="confirmPassword" required
+                                        minlength="6">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-secondary">Update Password</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script src="js/user.js"></script>
+</body>
+
+</html>

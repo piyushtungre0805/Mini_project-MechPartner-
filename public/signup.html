@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create your MechPartner account — Register as a user or mechanic to get started.">
+    <title>Sign Up — MechPartner</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body data-page="signup">
+    <div class="auth-container">
+        <div class="auth-card" style="max-width: 600px;">
+            <button class="btn-back" onclick="window.location.href='index.html'" style="margin-bottom: 1.5rem;">Back to Home</button>
+            <div class="auth-header">
+                <a href="/" class="navbar-brand" style="justify-content: center; margin-bottom: 1rem;">
+                    <span class="brand-icon">🔧</span>
+                    MechPartner
+                </a>
+                <h1>Create Account</h1>
+                <p>Join MechPartner as a user or mechanic</p>
+            </div>
+
+            <!-- Role Tabs -->
+            <div class="role-tabs">
+                <button class="role-tab active" id="userTab">👤 Register as User</button>
+                <button class="role-tab" id="mechanicTab">🔧 Register as Mechanic</button>
+            </div>
+
+            <form id="signupForm" enctype="multipart/form-data">
+                <input type="hidden" name="role" id="roleInput" value="user">
+
+                <!-- Common Fields -->
+                <div class="form-group">
+                    <label for="name">Full Name *</label>
+                    <input type="text" class="form-control" id="name" name="name" placeholder="Enter your full name"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="you@example.com"
+                        required>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="phone">Phone Number *</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="9876543210"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password *</label>
+                        <input type="password" class="form-control" id="password" name="password"
+                            placeholder="Min. 6 characters" required minlength="6">
+                    </div>
+                </div>
+
+                <!-- User-Specific Fields -->
+                <div id="userFields">
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <input type="text" class="form-control" id="address" name="address" placeholder="Your address">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Profile Photo</label>
+                            <div class="file-upload">
+                                <div class="file-upload-icon">📸</div>
+                                <div class="file-upload-text">Click to upload</div>
+                                <div class="file-name" id="profilePhotoLabel">No file chosen</div>
+                                <input type="file" name="profilePhoto" id="profilePhoto" accept="image/*">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Aadhar Card</label>
+                            <div class="file-upload">
+                                <div class="file-upload-icon">🪪</div>
+                                <div class="file-upload-text">Click to upload</div>
+                                <div class="file-name" id="aadharCardLabel">No file chosen</div>
+                                <input type="file" name="aadharCard" id="aadharCard" accept="image/*">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mechanic-Specific Fields -->
+                <div id="mechanicFields" class="hidden">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="shopName">Garage / Shop Name *</label>
+                            <input type="text" class="form-control" id="shopName" name="shopName"
+                                placeholder="Your shop name">
+                        </div>
+                        <div class="form-group">
+                            <label for="serviceArea">Service Area</label>
+                            <input type="text" class="form-control" id="serviceArea" name="serviceArea"
+                                placeholder="e.g., 5 km radius">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shopAddress">Shop Address</label>
+                        <input type="text" class="form-control" id="shopAddress" name="shopAddress"
+                            placeholder="Full shop address">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="services">Services Offered</label>
+                        <input type="text" class="form-control" id="services" name="services"
+                            placeholder="e.g., Bike Repair, Car Service, AC Repair (comma-separated)">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Profile Photo</label>
+                            <div class="file-upload">
+                                <div class="file-upload-icon">📸</div>
+                                <div class="file-upload-text">Upload photo</div>
+                                <div class="file-name" id="profilePhotoLabel">No file chosen</div>
+                                <input type="file" name="profilePhoto" id="profilePhoto" accept="image/*">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Aadhar Card</label>
+                            <div class="file-upload">
+                                <div class="file-upload-icon">🪪</div>
+                                <div class="file-upload-text">Upload Aadhar</div>
+                                <div class="file-name" id="aadharCardLabel">No file chosen</div>
+                                <input type="file" name="aadharCard" id="aadharCard" accept="image/*">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>PAN Card</label>
+                            <div class="file-upload">
+                                <div class="file-upload-icon">💳</div>
+                                <div class="file-upload-text">Upload PAN</div>
+                                <div class="file-name" id="panCardLabel">No file chosen</div>
+                                <input type="file" name="panCard" id="panCard" accept="image/*">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Driving License</label>
+                            <div class="file-upload">
+                                <div class="file-upload-icon">🚗</div>
+                                <div class="file-upload-text">Upload DL</div>
+                                <div class="file-name" id="drivingLicenseLabel">No file chosen</div>
+                                <input type="file" name="drivingLicense" id="drivingLicense" accept="image/*">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Shop Picture</label>
+                            <div class="file-upload">
+                                <div class="file-upload-icon">🏪</div>
+                                <div class="file-upload-text">Upload Shop</div>
+                                <div class="file-name" id="shopImageLabel">No file chosen</div>
+                                <input type="file" name="shopImage" id="shopImage" accept="image/*">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location -->
+                <div class="form-group">
+                    <label>Current Location</label>
+                    <button type="button" class="btn btn-secondary btn-block" id="getLocationBtn">📍 Get My
+                        Location</button>
+                    <input type="hidden" name="lat" id="lat">
+                    <input type="hidden" name="lng" id="lng">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg mt-2">Create Account</button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Already have an account? <a href="login.html">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+
+</html>

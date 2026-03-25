@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages — MechPartner</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body data-page="messages">
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+        <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+
+        <main class="main-content">
+            <div class="page-header animate-fade-in">
+                <div style="display: flex; align-items: center;">
+                    <button class="btn-back" onclick="history.back()"></button>
+                    <div>
+                        <h1>My Conversations</h1>
+                        <p>Manage your ongoing chats with <span id="partnerType">partners</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="messagesList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading conversations...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/bot.js"></script>
+    <script src="js/messages.js"></script>
+</body>
+
+</html>

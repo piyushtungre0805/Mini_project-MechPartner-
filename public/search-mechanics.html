@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Mechanics — MechPartner</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body data-page="search-mechanics">
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+        <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+
+        <main class="main-content">
+            <div class="page-header animate-fade-in">
+                <div style="display: flex; align-items: center;">
+                    <button class="btn-back" onclick="history.back()"></button>
+                    <div>
+                        <h1>Find Nearby Mechanics</h1>
+                        <p>Discover trusted mechanics within 10 km of your location</p>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-lg" id="searchBtn">🔍 Find Nearby Mechanics</button>
+            </div>
+
+            <div id="searchResults">
+                <div class="empty-state">
+                    <div class="empty-state-icon" style="font-size: 4rem;">🔍</div>
+                    <h3>Ready to search?</h3>
+                    <p>Click the "Find Nearby Mechanics" button to discover verified mechanics near you. We'll use your
+                        current location to find the closest options.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script src="js/search.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sign in to MechPartner — Access your dashboard and find nearby mechanics.">
+    <title>Login — MechPartner</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body data-page="login">
+    <div class="auth-container">
+        <div class="auth-card">
+            <button class="btn-back" onclick="window.location.href='index.html'" style="margin-bottom: 1.5rem;">Back to Home</button>
+            <div class="auth-header">
+                <a href="/" class="navbar-brand" style="justify-content: center; margin-bottom: 1rem;">
+                    <span class="brand-icon">🔧</span>
+                    MechPartner
+                </a>
+                <h1>Welcome Back</h1>
+                <p>Sign in to your account to continue</p>
+            </div>
+
+            <form id="loginForm">
+                <!-- Role Selection -->
+                <div class="form-group">
+                    <label>Login As</label>
+                    <div class="role-tabs">
+                        <label class="role-tab active" style="cursor: pointer;">
+                            <input type="radio" name="role" value="user" checked style="display:none;">
+                            👤 User
+                        </label>
+                        <label class="role-tab" style="cursor: pointer;">
+                            <input type="radio" name="role" value="mechanic" style="display:none;">
+                            🔧 Mechanic
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" class="form-control" id="email" placeholder="you@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" id="password" placeholder="Enter your password"
+                        required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In</button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="signup.html">Create Account</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Role tab toggle styling
+        document.querySelectorAll('.role-tabs .role-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.role-tabs .role-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const radio = tab.querySelector('input[type="radio"]');
+                if (radio) radio.checked = true;
+            });
+        });
+    </script>
+</body>
+
+</html>

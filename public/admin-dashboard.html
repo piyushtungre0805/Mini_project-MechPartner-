@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Admin Dashboard — Manage Mechanics in MechPartner.">
+    <title>Admin Dashboard — MechPartner</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .mechanic-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .mechanic-table th,
+        .mechanic-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .mechanic-table th {
+            background: var(--bg-dark);
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        .mechanic-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-active {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .status-banned {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+    </style>
+</head>
+
+<body data-page="admin">
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div style="display: flex; align-items: center;">
+                    <button class="btn-back" onclick="history.back()"></button>
+                    <div>
+                        <h1>Admin Dashboard</h1>
+                        <p>Manage Mechanics and System Settings</p>
+                    </div>
+                </div>
+                <button onclick="toggleTheme()" class="btn btn-outline" title="Toggle Theme">🌓 Toggle Theme</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Registered Mechanics</h2>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="mechanic-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Shop Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mechanicList">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 2rem;">Loading mechanics...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile sidebar toggle button -->
+    <button class="btn btn-primary" onclick="toggleSidebar()"
+        style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; border-radius: 50%; width: 50px; height: 50px; padding: 0; box-shadow: var(--shadow-lg); display: flex; align-items: center; justify-content: center;"
+        id="mobileToggle">
+        <span>☰</span>
+    </button>
+
+    <script src="js/common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!requireAuth('admin')) return;
+            injectSidebar('admin');
+            setActiveNav('nav-admin-dashboard');
+
+            // Hide mobile toggle on desktop
+            if (window.innerWidth > 768) {
+                document.getElementById('mobileToggle').style.display = 'none';
+            }
+
+            loadMechanics();
+        });
+
+        async function loadMechanics() {
+            const list = document.getElementById('mechanicList');
+            try {
+                // We'll add this endpoint to the backend shortly, or we already did
+                const mechanics = await apiRequest('/admin/mechanics');
+
+                if (!mechanics || mechanics.length === 0) {
+                    list.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No mechanics found.</td></tr>';
+                    return;
+                }
+
+                list.innerHTML = mechanics.map(mech => `
+                    <tr>
+                        <td style="font-weight: 500;">${mech.name}</td>
+                        <td>${mech.shopName}</td>
+                        <td>${mech.email}</td>
+                        <td>${mech.phone}</td>
+                        <td>
+                            <span class="status-badge ${mech.isBanned ? 'status-banned' : 'status-active'}">
+                                ${mech.isBanned ? 'Banned' : 'Active'}
+                            </span>
+                        </td>
+                        <td>
+                            <button onclick="toggleBan('${mech._id}', ${mech.isBanned})" 
+                                class="btn btn-sm ${mech.isBanned ? 'btn-success' : 'btn-danger'}">
+                                ${mech.isBanned ? 'Unban' : 'Ban'}
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                list.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 2rem;">Error loading mechanics: ${error.message}</td></tr>`;
+            }
+        }
+
+        async function toggleBan(id, currentStatus) {
+            const action = currentStatus ? 'unban' : 'ban';
+            if (!confirm(`Are you sure you want to ${action} this mechanic?`)) return;
+
+            try {
+                await apiRequest(`/admin/mechanics/${id}/ban`, { method: 'PUT' });
+                showToast(`Mechanic successfully ${action}ned.`, 'success');
+                loadMechanics(); // Reload the list
+            } catch (error) {
+                showToast(`Failed to ${action} mechanic: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>
