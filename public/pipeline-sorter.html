@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Pipeline Sorter — Automatically sort pipeline steps by dependency and export as structured .txt file.">
+    <title>Pipeline Sorter — MechPartner Tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:        #0a0f1e;
+            --bg-card:   #111827;
+            --bg-panel:  #1a2235;
+            --border:    rgba(255,255,255,0.08);
+            --border-lit: rgba(99,102,241,0.4);
+            --primary:   #6366f1;
+            --primary-g: linear-gradient(135deg, #6366f1, #8b5cf6);
+            --accent:    #10b981;
+            --accent-g:  linear-gradient(135deg, #10b981, #059669);
+            --warn:      #f59e0b;
+            --danger:    #ef4444;
+            --text:      #f1f5f9;
+            --text-sub:  #94a3b8;
+            --text-muted:#64748b;
+            --radius:    10px;
+            --radius-lg: 16px;
+            --shadow:    0 4px 24px rgba(0,0,0,0.4);
+            --shadow-lg: 0 8px 48px rgba(0,0,0,0.6);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        /* ── Header ── */
+        header {
+            background: linear-gradient(135deg, #0d1b3e 0%, #1a0a3e 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+        header .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            text-decoration: none;
+        }
+        header .logo .ico {
+            width: 36px; height: 36px;
+            background: var(--primary-g);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+        }
+        .header-badge {
+            background: rgba(99,102,241,0.15);
+            border: 1px solid rgba(99,102,241,0.3);
+            color: #a5b4fc;
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Main layout ── */
+        .page-wrap {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 3rem 1rem 2rem;
+        }
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, #c7d2fe, #818cf8, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.15;
+            margin-bottom: 0.75rem;
+        }
+        .hero p {
+            color: var(--text-sub);
+            font-size: 1.05rem;
+            max-width: 540px;
+            margin: 0 auto 2rem;
+            line-height: 1.7;
+        }
+
+        /* ── Grid layout ── */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 0.5rem;
+        }
+        @media (max-width: 860px) { .main-grid { grid-template-columns: 1fr; } }
+
+        /* ── Panel ── */
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 1.1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: rgba(255,255,255,0.02);
+        }
+        .panel-header h2 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .panel-header .tag {
+            margin-left: auto;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.2rem 0.55rem;
+            border-radius: 99px;
+            background: rgba(99,102,241,0.15);
+            color: #a5b4fc;
+        }
+        .panel-body { padding: 1.5rem; }
+
+        /* ── Form ── */
+        .label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.3px;
+        }
+        .input-text {
+            width: 100%;
+            padding: 0.65rem 0.9rem;
+            background: var(--bg-panel);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+        .input-text:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+        }
+        .textarea {
+            resize: vertical;
+            min-height: 80px;
+            line-height: 1.5;
+        }
+        .form-row { margin-bottom: 1.1rem; }
+        .hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.35rem;
+            line-height: 1.5;
+        }
+
+        /* ── Step list editor ── */
+        .step-list { list-style: none; margin-bottom: 1rem; }
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            padding: 0.8rem;
+            background: var(--bg-panel);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 0.5rem;
+            transition: border-color 0.2s;
+            cursor: grab;
+        }
+        .step-item:hover { border-color: var(--border-lit); }
+        .step-item.dragging {
+            opacity: 0.5;
+            border-color: var(--primary);
+            cursor: grabbing;
+        }
+        .step-item.drag-over { border-color: var(--accent); background: rgba(16,185,129,0.06); }
+
+        .step-num {
+            width: 26px; height: 26px; min-width: 26px;
+            border-radius: 50%;
+            background: var(--primary-g);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #fff;
+            margin-top: 1px;
+        }
+        .step-content { flex: 1; }
+        .step-name {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .step-deps {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .step-actions { display: flex; gap: 0.3rem; }
+        .btn-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0.25rem;
+            border-radius: 6px;
+            color: var(--text-muted);
+            transition: background 0.15s, color 0.15s;
+        }
+        .btn-icon:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+        .btn-icon.del:hover { background: rgba(239,68,68,0.12); color: var(--danger); }
+
+        /* ── Add step form ── */
+        .add-step-form {
+            background: rgba(99,102,241,0.05);
+            border: 1.5px dashed rgba(99,102,241,0.3);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            padding: 0.65rem 1.25rem;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--primary-g); color: #fff; box-shadow: 0 2px 12px rgba(99,102,241,0.3); }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-success { background: var(--accent-g); color: #fff; box-shadow: 0 2px 12px rgba(16,185,129,0.25); }
+        .btn-success:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--border);
+            color: var(--text-sub);
+        }
+        .btn-outline:hover { border-color: var(--primary); color: var(--text); }
+        .btn-sm { padding: 0.4rem 0.85rem; font-size: 0.8rem; }
+        .btn-block { width: 100%; }
+        .btn-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+        /* ── Output panel ── */
+        .output-box {
+            background: #0d1117;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            line-height: 1.8;
+            color: #e2e8f0;
+            white-space: pre-wrap;
+            min-height: 220px;
+            overflow-y: auto;
+            max-height: 480px;
+        }
+        .output-box .out-title  { color: #818cf8; font-weight: 600; }
+        .output-box .out-sep    { color: #374151; }
+        .output-box .out-step   { color: #e2e8f0; }
+        .output-box .out-num    { color: #6366f1; font-weight: 700; }
+        .output-box .out-dep    { color: #64748b; font-size: 0.75rem; }
+        .output-box .out-ok     { color: #10b981; }
+        .output-box .out-err    { color: #ef4444; }
+
+        /* ── Alert ── */
+        .alert {
+            padding: 0.8rem 1rem;
+            border-radius: var(--radius);
+            font-size: 0.84rem;
+            margin-bottom: 1rem;
+            display: none;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        .alert.visible { display: flex; }
+        .alert-danger  { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+        .alert-success { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; }
+
+        /* ── Pressets ── */
+        .presets {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+        .preset-chip {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-sub);
+            border-radius: 99px;
+            padding: 0.3rem 0.85rem;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .preset-chip:hover { border-color: var(--primary); color: var(--text); background: rgba(99,102,241,0.08); }
+
+        /* ── Stats ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .stat-box {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.85rem;
+            text-align: center;
+        }
+        .stat-box .sv { font-size: 1.5rem; font-weight: 800; }
+        .stat-box .sl { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .sv-blue  { color: #818cf8; }
+        .sv-green { color: #34d399; }
+        .sv-warn  { color: #fbbf24; }
+
+        /* ── Footer ── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 1.25rem 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="index.html" class="logo">
+        <div class="ico">🔧</div>
+        MechPartner
+    </a>
+    <span class="header-badge">⚙️ Pipeline Sorter</span>
+</header>
+
+<div class="page-wrap">
+    <!-- Hero -->
+    <div class="hero">
+        <h1>Pipeline Sorter &amp; Exporter</h1>
+        <p>Add your pipeline steps, define dependencies, and let the topological sort engine arrange them in perfect logical order. Then export as a structured <code>.txt</code> file.</p>
+    </div>
+
+    <!-- Pipeline Name -->
+    <div class="form-row" style="max-width: 520px; margin: 0 auto 1.5rem;">
+        <label class="label" for="pipelineName">📋 Pipeline Name</label>
+        <input type="text" class="input-text" id="pipelineName" placeholder="e.g., MechPartner Onboarding Pipeline" value="MechPartner Onboarding Pipeline">
+    </div>
+
+    <!-- Quick Presets -->
+    <div style="text-align:center; margin-bottom: 0.5rem;">
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.6rem;">Quick load a preset:</p>
+        <div class="presets" style="justify-content:center;">
+            <div class="preset-chip" onclick="loadPreset('onboarding')">🔧 Mechanic Onboarding</div>
+            <div class="preset-chip" onclick="loadPreset('data')">📊 Data Processing</div>
+            <div class="preset-chip" onclick="loadPreset('deploy')">🚀 Software Deployment</div>
+            <div class="preset-chip" onclick="loadPreset('ml')">🤖 ML Training</div>
+        </div>
+    </div>
+
+    <div class="main-grid">
+        <!-- LEFT: Input panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>📥</span>
+                <h2>Pipeline Steps</h2>
+                <span class="tag" id="stepCountTag">0 steps</span>
+            </div>
+            <div class="panel-body">
+
+                <!-- Add Step Form -->
+                <div class="add-step-form">
+                    <div class="form-row">
+                        <label class="label" for="newStepName">Step Name *</label>
+                        <input type="text" class="input-text" id="newStepName" placeholder="e.g., Data Cleaning">
+                    </div>
+                    <div class="form-row" style="margin-bottom:0.75rem;">
+                        <label class="label" for="newStepDeps">Depends On (comma-separated step names)</label>
+                        <input type="text" class="input-text" id="newStepDeps" placeholder="e.g., Data Collection, Preprocessing">
+                        <p class="hint">Leave empty if this step has no prerequisites</p>
+                    </div>
+                    <div class="form-row" style="margin-bottom:0;">
+                        <label class="label" for="newStepDesc">Description (optional)</label>
+                        <textarea class="input-text textarea" id="newStepDesc" placeholder="What does this step do?" style="min-height:55px;"></textarea>
+                    </div>
+                    <div class="btn-row" style="margin-top:0.85rem;">
+                        <button class="btn btn-primary btn-sm" onclick="addStep()">＋ Add Step</button>
+                        <button class="btn btn-outline btn-sm" onclick="clearAll()">🗑 Clear All</button>
+                    </div>
+                </div>
+
+                <!-- Alert -->
+                <div class="alert alert-danger" id="inputAlert">
+                    <span>⚠️</span><span id="inputAlertText"></span>
+                </div>
+
+                <!-- Step List -->
+                <ul class="step-list" id="stepList">
+                    <li id="emptyState" style="text-align:center;color:var(--text-muted);padding:2rem;font-size:0.85rem;">
+                        No steps yet. Add your first step above or load a preset.
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- RIGHT: Output panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>📤</span>
+                <h2>Sorted Output</h2>
+                <span class="tag" id="sortStatusTag">Not sorted</span>
+            </div>
+            <div class="panel-body">
+
+                <!-- Stats -->
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <div class="sv sv-blue" id="statSteps">0</div>
+                        <div class="sl">Total Steps</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="sv sv-green" id="statDeps">0</div>
+                        <div class="sl">Dependencies</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="sv sv-warn" id="statCycles">–</div>
+                        <div class="sl">Cycles</div>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="btn-row" style="margin-bottom:1.25rem;">
+                    <button class="btn btn-primary" onclick="sortPipeline()" style="flex:1;">
+                        ⚡ Sort Pipeline
+                    </button>
+                    <button class="btn btn-success" onclick="exportTxt()" id="exportBtn" disabled>
+                        ⬇ Export .txt
+                    </button>
+                </div>
+
+                <!-- Alert -->
+                <div class="alert alert-danger" id="sortAlert">
+                    <span>⚠️</span><span id="sortAlertText"></span>
+                </div>
+                <div class="alert alert-success" id="sortSuccess">
+                    <span>✅</span><span id="sortSuccessText"></span>
+                </div>
+
+                <!-- Output -->
+                <div class="output-box" id="outputBox">
+Click <strong>"⚡ Sort Pipeline"</strong> to sort your steps...
+                </div>
+
+                <!-- Copy -->
+                <button class="btn btn-outline btn-sm btn-block" style="margin-top:0.75rem;" onclick="copyOutput()">📋 Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    Pipeline Sorter — MechPartner Tools &nbsp;·&nbsp; Topological Sort (Kahn's Algorithm)
+</footer>
+
+<script>
+// ─────────────────────────────────────────
+// Data store
+// ─────────────────────────────────────────
+let steps   = [];    // { id, name, deps: [], desc }
+let sortedResult = null;
+let nextId  = 1;
+
+// ─────────────────────────────────────────
+// Presets
+// ─────────────────────────────────────────
+const PRESETS = {
+    onboarding: {
+        name: 'MechPartner Onboarding Pipeline',
+        steps: [
+            { name: 'Account Registration',     deps: [],                              desc: 'User fills signup form with name, email, phone, password' },
+            { name: 'Email Verification',        deps: ['Account Registration'],        desc: 'OTP or link sent to verify email address' },
+            { name: 'Password Strength Check',   deps: ['Account Registration'],        desc: 'Validate password meets 100% strength criteria' },
+            { name: 'Document Upload',           deps: ['Email Verification'],          desc: 'Upload Aadhaar, Driving License, PAN card' },
+            { name: 'Identity Cross-Validation', deps: ['Document Upload'],             desc: 'Cross-check name and DOB across Aadhaar and License' },
+            { name: 'Address Verification',      deps: ['Email Verification'],          desc: 'Google Maps geocoding validates entered address' },
+            { name: 'Admin Review',              deps: ['Identity Cross-Validation', 'Address Verification'], desc: 'Admin reviews verification status' },
+            { name: 'Profile Activation',        deps: ['Admin Review'],                desc: 'Mechanic profile goes live and is searchable' },
+        ]
+    },
+    data: {
+        name: 'Data Processing Pipeline',
+        steps: [
+            { name: 'Data Collection',     deps: [],                         desc: 'Gather raw data from sources' },
+            { name: 'Data Cleaning',       deps: ['Data Collection'],        desc: 'Remove nulls, duplicates, fix types' },
+            { name: 'Data Validation',     deps: ['Data Cleaning'],          desc: 'Schema and range validation' },
+            { name: 'Feature Engineering', deps: ['Data Validation'],        desc: 'Create derived features' },
+            { name: 'Normalization',       deps: ['Feature Engineering'],    desc: 'Scale features to standard range' },
+            { name: 'Model Training',      deps: ['Normalization'],          desc: 'Train ML model on cleaned data' },
+            { name: 'Evaluation',          deps: ['Model Training'],         desc: 'Compute accuracy, precision, recall' },
+            { name: 'Deployment',          deps: ['Evaluation'],             desc: 'Push model to production' },
+        ]
+    },
+    deploy: {
+        name: 'Software Deployment Pipeline',
+        steps: [
+            { name: 'Code Commit',         deps: [],                        desc: 'Developer pushes code to repository' },
+            { name: 'Unit Tests',           deps: ['Code Commit'],           desc: 'Run all unit tests' },
+            { name: 'Integration Tests',    deps: ['Unit Tests'],            desc: 'Run integration test suite' },
+            { name: 'Build',               deps: ['Integration Tests'],     desc: 'Compile and bundle application' },
+            { name: 'Security Scan',        deps: ['Build'],                 desc: 'Static analysis and vulnerability check' },
+            { name: 'Staging Deploy',       deps: ['Security Scan'],         desc: 'Deploy to staging environment' },
+            { name: 'QA Testing',           deps: ['Staging Deploy'],        desc: 'Manual and automated QA on staging' },
+            { name: 'Production Deploy',    deps: ['QA Testing'],            desc: 'Deploy to live production servers' },
+            { name: 'Smoke Tests',          deps: ['Production Deploy'],     desc: 'Quick sanity check on production' },
+            { name: 'Monitoring',           deps: ['Smoke Tests'],           desc: 'Enable alerting and log monitoring' },
+        ]
+    },
+    ml: {
+        name: 'ML Model Training Pipeline',
+        steps: [
+            { name: 'Problem Definition',   deps: [],                            desc: 'Define objective and success metrics' },
+            { name: 'Data Collection',      deps: ['Problem Definition'],        desc: 'Gather labelled training data' },
+            { name: 'Exploratory Analysis', deps: ['Data Collection'],           desc: 'Visualize distributions and correlations' },
+            { name: 'Preprocessing',        deps: ['Exploratory Analysis'],      desc: 'Clean, encode, and transform data' },
+            { name: 'Feature Selection',    deps: ['Preprocessing'],             desc: 'Select most relevant features' },
+            { name: 'Model Selection',      deps: ['Problem Definition'],        desc: 'Choose algorithm family' },
+            { name: 'Training',             deps: ['Feature Selection', 'Model Selection'], desc: 'Fit model on training set' },
+            { name: 'Hyperparameter Tuning',deps: ['Training'],                  desc: 'Grid/random search optimization' },
+            { name: 'Evaluation',           deps: ['Hyperparameter Tuning'],     desc: 'Test on held-out set' },
+            { name: 'Documentation',        deps: ['Evaluation'],                desc: 'Write model card and results' },
+        ]
+    }
+};
+
+function loadPreset(key) {
+    const p = PRESETS[key];
+    if (!p) return;
+    steps  = [];
+    nextId = 1;
+    document.getElementById('pipelineName').value = p.name;
+    p.steps.forEach(s => {
+        steps.push({ id: nextId++, name: s.name, deps: s.deps, desc: s.desc || '' });
+    });
+    sortedResult = null;
+    document.getElementById('exportBtn').disabled = true;
+    document.getElementById('sortStatusTag').textContent = 'Not sorted';
+    document.getElementById('outputBox').textContent = 'Click "⚡ Sort Pipeline" to sort your steps...';
+    renderStepList();
+    updateStats();
+    hideAlerts();
+}
+
+// ─────────────────────────────────────────
+// Add / Remove steps
+// ─────────────────────────────────────────
+function addStep() {
+    const nameEl = document.getElementById('newStepName');
+    const depsEl = document.getElementById('newStepDeps');
+    const descEl = document.getElementById('newStepDesc');
+    const name   = nameEl.value.trim();
+
+    if (!name) { showInputAlert('Step name is required.'); nameEl.focus(); return; }
+
+    // Duplicate check
+    if (steps.find(s => s.name.toLowerCase() === name.toLowerCase())) {
+        showInputAlert(`A step named "${name}" already exists.`);
+        return;
+    }
+
+    const deps = depsEl.value.split(',').map(d => d.trim()).filter(Boolean);
+
+    steps.push({ id: nextId++, name, deps, desc: descEl.value.trim() });
+
+    nameEl.value = '';
+    depsEl.value = '';
+    descEl.value = '';
+    nameEl.focus();
+    sortedResult = null;
+    document.getElementById('exportBtn').disabled = true;
+    document.getElementById('sortStatusTag').textContent = 'Not sorted';
+
+    renderStepList();
+    updateStats();
+    hideAlerts();
+}
+
+function removeStep(id) {
+    const step  = steps.find(s => s.id === id);
+    steps       = steps.filter(s => s.id !== id);
+    // Remove from other steps' deps
+    if (step) steps.forEach(s => { s.deps = s.deps.filter(d => d !== step.name); });
+    sortedResult = null;
+    document.getElementById('exportBtn').disabled = true;
+    document.getElementById('sortStatusTag').textContent = 'Not sorted';
+    renderStepList();
+    updateStats();
+    hideAlerts();
+}
+
+function clearAll() {
+    if (!steps.length || confirm('Clear all pipeline steps?')) {
+        steps = [];
+        nextId = 1;
+        sortedResult = null;
+        document.getElementById('exportBtn').disabled = true;
+        document.getElementById('sortStatusTag').textContent = 'Not sorted';
+        document.getElementById('outputBox').textContent = 'Click "⚡ Sort Pipeline" to sort your steps...';
+        renderStepList();
+        updateStats();
+        hideAlerts();
+    }
+}
+
+// ─────────────────────────────────────────
+// Render step list
+// ─────────────────────────────────────────
+function renderStepList() {
+    const ul = document.getElementById('stepList');
+    const empty = document.getElementById('emptyState');
+    document.getElementById('stepCountTag').textContent = steps.length + ' step' + (steps.length !== 1 ? 's' : '');
+
+    if (!steps.length) {
+        ul.innerHTML = '';
+        ul.appendChild(empty);
+        return;
+    }
+    if (empty) empty.remove();
+
+    ul.innerHTML = steps.map((s, i) => `
+        <li class="step-item" draggable="true"
+            ondragstart="dragStart(event, ${i})"
+            ondragover="dragOver(event, ${i})"
+            ondrop="drop(event, ${i})"
+            ondragleave="dragLeave(event)">
+            <div class="step-num">${i + 1}</div>
+            <div class="step-content">
+                <div class="step-name">${escHtml(s.name)}</div>
+                ${s.deps.length ? `<div class="step-deps">Depends on: ${s.deps.map(d => `<span style="color:#a5b4fc;">${escHtml(d)}</span>`).join(', ')}</div>` : '<div class="step-deps" style="color:#374151;">No dependencies</div>'}
+                ${s.desc ? `<div style="font-size:0.76rem;color:var(--text-muted);margin-top:0.15rem;">${escHtml(s.desc)}</div>` : ''}
+            </div>
+            <div class="step-actions">
+                <button class="btn-icon del" onclick="removeStep(${s.id})" title="Remove">✕</button>
+            </div>
+        </li>
+    `).join('');
+}
+
+// ─────────────────────────────────────────
+// Drag & drop reorder
+// ─────────────────────────────────────────
+let dragSrc = null;
+function dragStart(e, i)    { dragSrc = i; e.currentTarget.classList.add('dragging'); }
+function dragOver(e, i)     { e.preventDefault(); if (i !== dragSrc) e.currentTarget.classList.add('drag-over'); }
+function dragLeave(e)       { e.currentTarget.classList.remove('drag-over', 'dragging'); }
+function drop(e, i) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over', 'dragging');
+    if (dragSrc === null || dragSrc === i) return;
+    const moved = steps.splice(dragSrc, 1)[0];
+    steps.splice(i, 0, moved);
+    dragSrc = null;
+    renderStepList();
+}
+
+// ─────────────────────────────────────────
+// Stats
+// ─────────────────────────────────────────
+function updateStats() {
+    const totalDeps = steps.reduce((sum, s) => sum + s.deps.length, 0);
+    document.getElementById('statSteps').textContent = steps.length;
+    document.getElementById('statDeps').textContent  = totalDeps;
+    document.getElementById('statCycles').textContent = '–';
+}
+
+// ─────────────────────────────────────────
+// TOPOLOGICAL SORT (Kahn's Algorithm)
+// ─────────────────────────────────────────
+function topoSort(stepsArr) {
+    const nameToStep = {};
+    stepsArr.forEach(s => { nameToStep[s.name] = s; });
+
+    // Validate deps exist
+    const missing = [];
+    stepsArr.forEach(s => {
+        s.deps.forEach(d => {
+            if (!nameToStep[d]) missing.push(`"${s.name}" depends on unknown step "${d}"`);
+        });
+    });
+    if (missing.length) return { ok: false, errors: missing, sorted: [] };
+
+    // Build adjacency list and in-degree map
+    const inDegree  = {};
+    const adjList   = {};
+    stepsArr.forEach(s => { inDegree[s.name] = 0; adjList[s.name] = []; });
+
+    stepsArr.forEach(s => {
+        s.deps.forEach(dep => {
+            adjList[dep].push(s.name);
+            inDegree[s.name]++;
+        });
+    });
+
+    // Queue with all steps with in-degree 0
+    const queue  = stepsArr.filter(s => inDegree[s.name] === 0).map(s => s.name);
+    const sorted = [];
+
+    while (queue.length) {
+        // Sort queue alphabetically for deterministic output
+        queue.sort();
+        const curr = queue.shift();
+        sorted.push(curr);
+        adjList[curr].forEach(neighbour => {
+            inDegree[neighbour]--;
+            if (inDegree[neighbour] === 0) queue.push(neighbour);
+        });
+    }
+
+    if (sorted.length !== stepsArr.length) {
+        // Cycle detected
+        const inCycle = stepsArr.filter(s => !sorted.includes(s.name)).map(s => s.name);
+        return { ok: false, errors: ['Circular dependency detected among: ' + inCycle.join(', ')], sorted: [], cycles: inCycle };
+    }
+
+    return { ok: true, errors: [], sorted, cycles: [] };
+}
+
+// ─────────────────────────────────────────
+// Sort action
+// ─────────────────────────────────────────
+function sortPipeline() {
+    hideAlerts();
+
+    if (!steps.length) {
+        showSortAlert('No steps to sort. Add at least one step first.');
+        return;
+    }
+
+    const result = topoSort(steps);
+
+    document.getElementById('statCycles').textContent = result.cycles?.length ? result.cycles.length : '0';
+
+    if (!result.ok) {
+        document.getElementById('sortStatusTag').textContent = '❌ Error';
+        document.getElementById('exportBtn').disabled = true;
+        sortedResult = null;
+        showSortAlert(result.errors.join('\n'));
+        renderOutputError(result.errors);
+        return;
+    }
+
+    sortedResult = result.sorted;
+
+    // Count deps
+    const totalDeps = steps.reduce((sum, s) => sum + s.deps.length, 0);
+    document.getElementById('statDeps').textContent = totalDeps;
+
+    document.getElementById('sortStatusTag').textContent = '✅ Sorted';
+    document.getElementById('exportBtn').disabled = false;
+    showSortSuccess(`Pipeline sorted successfully — ${sortedResult.length} steps in optimal order.`);
+    renderOutput();
+}
+
+// ─────────────────────────────────────────
+// Render output
+// ─────────────────────────────────────────
+function renderOutput() {
+    const pname  = document.getElementById('pipelineName').value.trim() || 'Untitled Pipeline';
+    const now    = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+    const box    = document.getElementById('outputBox');
+    const nameMap = {};
+    steps.forEach(s => { nameMap[s.name] = s; });
+
+    const sep    = '═'.repeat(50);
+    const sep2   = '─'.repeat(50);
+    let lines    = [];
+
+    lines.push(`<span class="out-title">╔${sep}╗</span>`);
+    lines.push(`<span class="out-title">║  PIPELINE STRUCTURE REPORT${' '.repeat(24)}║</span>`);
+    lines.push(`<span class="out-title">╚${sep}╝</span>`);
+    lines.push('');
+    lines.push(`<span class="out-title">Pipeline Name :</span>  ${escHtml(pname)}`);
+    lines.push(`<span class="out-title">Generated At  :</span>  ${escHtml(now)}`);
+    lines.push(`<span class="out-title">Total Steps   :</span>  ${sortedResult.length}`);
+    lines.push(`<span class="out-sep">${sep2}</span>`);
+    lines.push('');
+
+    sortedResult.forEach((name, i) => {
+        const s = nameMap[name] || { name, deps: [], desc: '' };
+        lines.push(`<span class="out-num">  ${String(i+1).padStart(2,'0')}.</span> <span class="out-step">${escHtml(s.name)}</span>`);
+        if (s.desc) lines.push(`       <span class="out-dep">↳ ${escHtml(s.desc)}</span>`);
+        if (s.deps.length) lines.push(`       <span class="out-dep">Depends on: ${s.deps.map(d => escHtml(d)).join(', ')}</span>`);
+        lines.push('');
+    });
+
+    lines.push(`<span class="out-sep">${sep2}</span>`);
+    lines.push(`<span class="out-ok">  ✓ Pipeline sorted successfully using Kahn's Topological Sort Algorithm</span>`);
+
+    box.innerHTML = lines.join('\n');
+}
+
+function renderOutputError(errors) {
+    const box = document.getElementById('outputBox');
+    box.innerHTML = `<span class="out-err">❌ Sort Failed\n\n${errors.map(e => '  • ' + escHtml(e)).join('\n')}\n\nPlease fix the issues above and try again.</span>`;
+}
+
+// ─────────────────────────────────────────
+// Export .txt
+// ─────────────────────────────────────────
+function exportTxt() {
+    if (!sortedResult) return;
+    const pname  = document.getElementById('pipelineName').value.trim() || 'Untitled Pipeline';
+    const now    = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+    const sep    = '='.repeat(52);
+    const sep2   = '-'.repeat(52);
+    const nameMap = {};
+    steps.forEach(s => { nameMap[s.name] = s; });
+
+    let txt = '';
+    txt += sep + '\n';
+    txt += '  PIPELINE STRUCTURE REPORT\n';
+    txt += sep + '\n\n';
+    txt += `Pipeline Name  : ${pname}\n`;
+    txt += `Generated At   : ${now}\n`;
+    txt += `Total Steps    : ${sortedResult.length}\n`;
+    txt += `Sort Algorithm : Topological Sort (Kahn's Algorithm)\n`;
+    txt += sep2 + '\n\n';
+
+    sortedResult.forEach((name, i) => {
+        const s = nameMap[name] || { name, deps: [], desc: '' };
+        txt += `  ${String(i+1).padStart(2,'0')}. ${s.name}\n`;
+        if (s.desc) txt += `       Description : ${s.desc}\n`;
+        if (s.deps.length) txt += `       Depends on  : ${s.deps.join(', ')}\n`;
+        txt += '\n';
+    });
+
+    txt += sep2 + '\n';
+    txt += `  Sorted by: MechPartner Pipeline Sorter\n`;
+    txt += sep + '\n';
+
+    // Download
+    const blob     = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+    const url      = URL.createObjectURL(blob);
+    const a        = document.createElement('a');
+    a.href         = url;
+    a.download     = pname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-]/g, '') + '_pipeline.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ─────────────────────────────────────────
+// Copy
+// ─────────────────────────────────────────
+function copyOutput() {
+    const raw = document.getElementById('outputBox').innerText;
+    navigator.clipboard.writeText(raw).then(() => {
+        showSortSuccess('Output copied to clipboard!');
+        setTimeout(() => document.getElementById('sortSuccess').classList.remove('visible'), 2000);
+    });
+}
+
+// ─────────────────────────────────────────
+// Alerts
+// ─────────────────────────────────────────
+function showInputAlert(msg) {
+    const el = document.getElementById('inputAlert');
+    document.getElementById('inputAlertText').textContent = msg;
+    el.classList.add('visible');
+}
+function showSortAlert(msg) {
+    const el = document.getElementById('sortAlert');
+    document.getElementById('sortAlertText').textContent = msg;
+    el.classList.add('visible');
+}
+function showSortSuccess(msg) {
+    const el = document.getElementById('sortSuccess');
+    document.getElementById('sortSuccessText').textContent = msg;
+    el.classList.add('visible');
+}
+function hideAlerts() {
+    document.getElementById('inputAlert').classList.remove('visible');
+    document.getElementById('sortAlert').classList.remove('visible');
+    document.getElementById('sortSuccess').classList.remove('visible');
+}
+
+// ─────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────
+function escHtml(str) {
+    return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Enter key on step name
+document.getElementById('newStepName').addEventListener('keydown', e => { if (e.key === 'Enter') addStep(); });
+
+// Bootstrap with mechanic onboarding preset
+loadPreset('onboarding');
+</script>
+</body>
+</html>

@@ -5,9 +5,13 @@ const User = require('../models/User');
 const Mechanic = require('../models/Mechanic');
 const { userUpload, mechanicUpload } = require('../middleware/upload');
 
+// Helper: normalise a name string for comparison (lowercase, trim, collapse spaces)
+function normaliseName(str) {
+    return (str || '').toLowerCase().trim().replace(/\s+/g, ' ');
+}
+
 // POST /api/signup
 router.post('/signup', (req, res, next) => {
-    // Determine role from query or body to pick the right multer config
     const role = req.query.role || 'user';
     if (role === 'mechanic') {
         mechanicUpload(req, res, (err) => {
@@ -29,28 +33,56 @@ router.post('/signup', (req, res, next) => {
         }
 
         const existingMechanic = await Mechanic.findOne({ email });
-        const existingUser = await User.findOne({ email });
+        const existingUser     = await User.findOne({ email });
         if (existingMechanic || existingUser) {
             return res.status(400).json({ message: 'Email already registered' });
         }
 
         if (role === 'mechanic') {
-            const { shopName, shopAddress, serviceArea, services } = req.body;
+            const { shopName, shopAddress, serviceArea, services,
+                    aadhaarName, aadhaarDob, licenseName, licenseDob, panNumber } = req.body;
             const lng = parseFloat(req.body.lng) || 0;
             const lat = parseFloat(req.body.lat) || 0;
 
+            // ── Identity Cross-Validation ──────────────────────────────────
+            let verificationStatus = 'pending';
+            let mismatchReason     = '';
+
+            if (aadhaarName && licenseName) {
+                const nameMatch = normaliseName(aadhaarName) === normaliseName(licenseName);
+                const dobMatch  = !aadhaarDob || !licenseDob || aadhaarDob === licenseDob;
+
+                if (!nameMatch) {
+                    mismatchReason += 'Name mismatch between Aadhaar and Driving License. ';
+                }
+                if (!dobMatch) {
+                    mismatchReason += 'Date of Birth mismatch between Aadhaar and Driving License. ';
+                }
+
+                verificationStatus = (nameMatch && dobMatch) ? 'verified' : 'unverified';
+            }
+
             const mechanic = new Mechanic({
                 name, email, phone, password,
-                shopName: shopName || '',
+                shopName:    shopName    || '',
                 shopAddress: shopAddress || '',
                 serviceArea: serviceArea || '',
-                services: services ? services.split(',').map(s => s.trim()) : [],
-                location: { type: 'Point', coordinates: [lng, lat] },
-                profilePhoto: req.files?.profilePhoto?.[0]?.filename || '',
-                aadharCard: req.files?.aadharCard?.[0]?.filename || '',
-                panCard: req.files?.panCard?.[0]?.filename || '',
+                services:    services ? services.split(',').map(s => s.trim()) : [],
+                location:    { type: 'Point', coordinates: [lng, lat] },
+                profilePhoto:   req.files?.profilePhoto?.[0]?.filename   || '',
+                aadharCard:     req.files?.aadharCard?.[0]?.filename     || '',
+                panCard:        req.files?.panCard?.[0]?.filename        || '',
                 drivingLicense: req.files?.drivingLicense?.[0]?.filename || '',
-                shopImage: req.files?.shopImage?.[0]?.filename || ''
+                shopImage:      req.files?.shopImage?.[0]?.filename      || '',
+                verificationStatus,
+                verificationData: {
+                    aadhaarName: aadhaarName || '',
+                    aadhaarDob:  aadhaarDob  || '',
+                    licenseName: licenseName || '',
+                    licenseDob:  licenseDob  || '',
+                    panNumber:   panNumber   || '',
+                    mismatchReason
+                }
             });
 
             await mechanic.save();
@@ -61,7 +93,14 @@ router.post('/signup', (req, res, next) => {
                 { expiresIn: '7d' }
             );
 
-            res.status(201).json({ token, role: 'mechanic', user: { id: mechanic._id, name: mechanic.name } });
+            res.status(201).json({
+                token,
+                role: 'mechanic',
+                user: { id: mechanic._id, name: mechanic.name },
+                verificationStatus,
+                mismatchReason: mismatchReason || undefined
+            });
+
         } else {
             const { address } = req.body;
             const lng = parseFloat(req.body.lng) || 0;
@@ -69,10 +108,10 @@ router.post('/signup', (req, res, next) => {
 
             const user = new User({
                 name, email, phone, password,
-                address: address || '',
+                address:  address || '',
                 location: { type: 'Point', coordinates: [lng, lat] },
                 profilePhoto: req.files?.profilePhoto?.[0]?.filename || '',
-                aadharCard: req.files?.aadharCard?.[0]?.filename || ''
+                aadharCard:   req.files?.aadharCard?.[0]?.filename   || ''
             });
 
             await user.save();
@@ -113,10 +152,10 @@ router.post('/login', async (req, res) => {
         let accountRole;
 
         if (role === 'mechanic') {
-            account = await Mechanic.findOne({ email });
+            account     = await Mechanic.findOne({ email });
             accountRole = 'mechanic';
         } else {
-            account = await User.findOne({ email });
+            account     = await User.findOne({ email });
             accountRole = 'user';
         }
 

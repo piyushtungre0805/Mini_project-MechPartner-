@@ -4,14 +4,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Create your MechPartner account — Register as a user or mechanic to get started.">
+    <meta name="description" content="Create your MechPartner account — Register as a user or mechanic to get started with secure identity verification.">
     <title>Sign Up — MechPartner</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* ── Password Strength ── */
+        .password-wrapper {
+            position: relative;
+        }
+        .password-wrapper .form-control {
+            padding-right: 3rem;
+        }
+        .toggle-pw {
+            position: absolute;
+            right: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            padding: 0;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+        .toggle-pw:hover { color: var(--primary); }
+
+        .strength-bar-wrap {
+            margin-top: 0.5rem;
+            background: var(--border);
+            border-radius: 99px;
+            height: 6px;
+            overflow: hidden;
+        }
+        .strength-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            transition: width 0.4s ease, background 0.4s ease;
+            width: 0%;
+        }
+        .strength-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.35rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .strength-label span { font-weight: 600; }
+
+        .pw-suggestions {
+            margin-top: 0.5rem;
+            padding: 0.6rem 0.9rem;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            border-radius: var(--radius);
+            display: none;
+        }
+        .pw-suggestions ul {
+            margin: 0;
+            padding-left: 1.2rem;
+            color: var(--danger, #ef4444);
+            font-size: 0.82rem;
+        }
+        .pw-suggestions ul li { margin-bottom: 0.2rem; }
+
+        /* ── Confirm Password ── */
+        .confirm-pw-status {
+            margin-top: 0.4rem;
+            font-size: 0.83rem;
+            font-weight: 600;
+            display: none;
+        }
+        .confirm-pw-status.match  { color: #10b981; display: block; }
+        .confirm-pw-status.no-match { color: #ef4444; display: block; }
+        .field-error { border-color: #ef4444 !important; box-shadow: 0 0 0 2px rgba(239,68,68,0.18) !important; }
+
+        /* ── File upload badge ── */
+        .upload-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+            display: block;
+        }
+        .file-upload.required-upload {
+            border-color: rgba(239,68,68,0.4);
+        }
+        .file-upload.upload-ok {
+            border-color: rgba(16,185,129,0.5);
+            background: rgba(16,185,129,0.04);
+        }
+
+        /* ── Identity Verification ── */
+        .id-verify-section {
+            margin-top: 1.5rem;
+            border-radius: var(--radius-lg);
+            border: 1.5px solid var(--border);
+            overflow: hidden;
+        }
+        .id-verify-header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .id-verify-header h3 {
+            margin: 0;
+            font-size: 1rem;
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+        .id-verify-body {
+            padding: 1.25rem;
+            background: var(--bg-card);
+        }
+        .id-doc-card {
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: var(--bg-dark, #0f172a);
+        }
+        .id-doc-card:last-child { margin-bottom: 0; }
+        .id-doc-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.85rem;
+            color: var(--text-primary);
+        }
+        .id-doc-title .badge-req {
+            font-size: 0.68rem;
+            background: rgba(239,68,68,0.15);
+            color: #ef4444;
+            padding: 0.15rem 0.45rem;
+            border-radius: 99px;
+            font-weight: 600;
+        }
+        .id-doc-title .badge-opt {
+            font-size: 0.68rem;
+            background: rgba(148,163,184,0.15);
+            color: var(--text-muted);
+            padding: 0.15rem 0.45rem;
+            border-radius: 99px;
+            font-weight: 600;
+        }
+
+        .id-mismatch-alert {
+            display: none;
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius);
+            background: rgba(239,68,68,0.1);
+            border: 1.5px solid rgba(239,68,68,0.4);
+            color: #ef4444;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .id-mismatch-alert.visible { display: flex; align-items: flex-start; gap: 0.5rem; }
+
+        .id-match-ok {
+            display: none;
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius);
+            background: rgba(16,185,129,0.1);
+            border: 1.5px solid rgba(16,185,129,0.4);
+            color: #10b981;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .id-match-ok.visible { display: flex; align-items: center; gap: 0.5rem; }
+
+        /* ── Address & Map ── */
+        .address-wrapper { position: relative; }
+        .address-verify-btn {
+            margin-top: 0.5rem;
+            width: 100%;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            padding: 0.6rem 1rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+        .address-verify-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .address-verify-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .map-preview {
+            display: none;
+            margin-top: 0.75rem;
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 1.5px solid var(--border);
+        }
+        .map-preview iframe {
+            width: 100%;
+            height: 220px;
+            border: none;
+        }
+        .map-preview.visible { display: block; }
+
+        .address-status {
+            margin-top: 0.4rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: none;
+        }
+        .address-status.ok { color: #10b981; display: block; }
+        .address-status.err { color: #ef4444; display: block; }
+    </style>
 </head>
 
 <body data-page="signup">
     <div class="auth-container">
-        <div class="auth-card" style="max-width: 600px;">
+        <div class="auth-card" style="max-width: 660px;">
             <button class="btn-back" onclick="window.location.href='index.html'" style="margin-bottom: 1.5rem;">Back to Home</button>
             <div class="auth-header">
                 <a href="/" class="navbar-brand" style="justify-content: center; margin-bottom: 1rem;">
@@ -34,54 +252,104 @@
                 <!-- Common Fields -->
                 <div class="form-group">
                     <label for="name">Full Name *</label>
-                    <input type="text" class="form-control" id="name" name="name" placeholder="Enter your full name"
-                        required>
+                    <input type="text" class="form-control" id="name" name="name" placeholder="Enter your full name" required>
                 </div>
 
                 <div class="form-group">
                     <label for="email">Email Address *</label>
-                    <input type="email" class="form-control" id="email" name="email" placeholder="you@example.com"
-                        required>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="you@example.com" required>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group">
-                        <label for="phone">Phone Number *</label>
-                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="9876543210"
-                            required>
-                    </div>
-                    <div class="form-group">
-                        <label for="password">Password *</label>
+                <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input type="tel" class="form-control" id="phone" name="phone" placeholder="9876543210" required>
+                </div>
+
+                <!-- Password with strength -->
+                <div class="form-group">
+                    <label for="password">Password *</label>
+                    <div class="password-wrapper">
                         <input type="password" class="form-control" id="password" name="password"
-                            placeholder="Min. 6 characters" required minlength="6">
+                            placeholder="Min. 8 chars · digit · special char" required>
+                        <button type="button" class="toggle-pw" id="togglePw" title="Show/hide password">👁</button>
                     </div>
+                    <!-- Progress bar -->
+                    <div class="strength-bar-wrap" id="strengthBarWrap" style="display:none;">
+                        <div class="strength-bar-fill" id="strengthBarFill"></div>
+                    </div>
+                    <div class="strength-label" id="strengthLabel" style="display:none;">
+                        <span id="strengthText">Strength</span>
+                        <span id="strengthPct">0%</span>
+                    </div>
+                    <!-- Suggestions -->
+                    <div class="pw-suggestions" id="pwSuggestions">
+                        <ul id="pwSuggestionList"></ul>
+                    </div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password *</label>
+                    <div class="password-wrapper">
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
+                            placeholder="Re-enter your password" required>
+                        <button type="button" class="toggle-pw" id="toggleConfirmPw" title="Show/hide password">👁</button>
+                    </div>
+                    <div class="confirm-pw-status" id="confirmPwStatus"></div>
                 </div>
 
                 <!-- User-Specific Fields -->
                 <div id="userFields">
+                    <!-- Address with map -->
                     <div class="form-group">
-                        <label for="address">Address</label>
-                        <input type="text" class="form-control" id="address" name="address" placeholder="Your address">
+                        <label for="userAddress">Address *</label>
+                        <input type="text" class="form-control" id="userAddress" name="address"
+                            placeholder="Enter your full address" required>
+                        <button type="button" class="address-verify-btn" id="verifyUserAddressBtn">
+                            📍 Verify Address
+                        </button>
+                        <div class="address-status" id="userAddressStatus"></div>
+                        <div class="map-preview" id="userMapPreview">
+                            <iframe id="userMapIframe" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+                        </div>
+                        <input type="hidden" name="lat" id="lat">
+                        <input type="hidden" name="lng" id="lng">
+                        <input type="hidden" name="addressVerified" id="userAddressVerified" value="0">
                     </div>
 
+                    <!-- User Photo (Mandatory) -->
+                    <div class="form-group">
+                        <label>Profile Photo <span class="badge-req" style="font-size:0.72rem;background:rgba(239,68,68,0.15);color:#ef4444;padding:0.1rem 0.4rem;border-radius:99px;font-weight:600;">Required</span></label>
+                        <div class="file-upload required-upload" id="userProfilePhotoWrap">
+                            <div class="file-upload-icon">📸</div>
+                            <div class="file-upload-text">Upload your photo (JPG/PNG, max 5MB)</div>
+                            <div class="file-name" id="profilePhotoLabel">No file chosen</div>
+                            <input type="file" name="profilePhoto" id="profilePhoto" accept="image/jpeg,image/png,image/webp">
+                        </div>
+                        <span class="upload-hint">✦ Clear face photo required for identity</span>
+                    </div>
+
+                    <!-- User Documents (Aadhaar OR PAN mandatory) -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
-                            <label>Profile Photo</label>
-                            <div class="file-upload">
-                                <div class="file-upload-icon">📸</div>
-                                <div class="file-upload-text">Click to upload</div>
-                                <div class="file-name" id="profilePhotoLabel">No file chosen</div>
-                                <input type="file" name="profilePhoto" id="profilePhoto" accept="image/*">
+                            <label>Aadhaar Card <span id="aadhaarBadge" style="font-size:0.72rem;background:rgba(239,68,68,0.15);color:#ef4444;padding:0.1rem 0.4rem;border-radius:99px;font-weight:600;">Required</span></label>
+                            <div class="file-upload required-upload" id="userAadhaarWrap">
+                                <div class="file-upload-icon">🪪</div>
+                                <div class="file-upload-text">Upload Aadhaar Card</div>
+                                <div class="file-name" id="aadharCardLabel">No file chosen</div>
+                                <input type="file" name="aadharCard" id="aadharCard" accept="image/jpeg,image/png,image/webp,application/pdf">
                             </div>
+                            <span class="upload-hint">JPG, PNG or PDF · max 5MB</span>
                         </div>
                         <div class="form-group">
-                            <label>Aadhar Card</label>
-                            <div class="file-upload">
-                                <div class="file-upload-icon">🪪</div>
-                                <div class="file-upload-text">Click to upload</div>
-                                <div class="file-name" id="aadharCardLabel">No file chosen</div>
-                                <input type="file" name="aadharCard" id="aadharCard" accept="image/*">
+                            <label>PAN Card <span id="panBadge" style="font-size:0.72rem;background:rgba(148,163,184,0.2);color:#94a3b8;padding:0.1rem 0.4rem;border-radius:99px;font-weight:600;">OR Required</span></label>
+                            <div class="file-upload" id="userPanWrap">
+                                <div class="file-upload-icon">💳</div>
+                                <div class="file-upload-text">Upload PAN Card</div>
+                                <div class="file-name" id="userPanCardLabel">No file chosen</div>
+                                <input type="file" name="panCard" id="userPanCard" accept="image/jpeg,image/png,image/webp,application/pdf">
                             </div>
+                            <span class="upload-hint">At least Aadhaar OR PAN must be uploaded</span>
                         </div>
                     </div>
                 </div>
@@ -91,20 +359,29 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
                             <label for="shopName">Garage / Shop Name *</label>
-                            <input type="text" class="form-control" id="shopName" name="shopName"
-                                placeholder="Your shop name">
+                            <input type="text" class="form-control" id="shopName" name="shopName" placeholder="Your shop name">
                         </div>
                         <div class="form-group">
                             <label for="serviceArea">Service Area</label>
-                            <input type="text" class="form-control" id="serviceArea" name="serviceArea"
-                                placeholder="e.g., 5 km radius">
+                            <input type="text" class="form-control" id="serviceArea" name="serviceArea" placeholder="e.g., 5 km radius">
                         </div>
                     </div>
 
+                    <!-- Shop Address with map -->
                     <div class="form-group">
-                        <label for="shopAddress">Shop Address</label>
+                        <label for="shopAddress">Shop Address *</label>
                         <input type="text" class="form-control" id="shopAddress" name="shopAddress"
-                            placeholder="Full shop address">
+                            placeholder="Full shop address" required>
+                        <button type="button" class="address-verify-btn" id="verifyShopAddressBtn">
+                            📍 Verify Shop Address
+                        </button>
+                        <div class="address-status" id="shopAddressStatus"></div>
+                        <div class="map-preview" id="shopMapPreview">
+                            <iframe id="shopMapIframe" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+                        </div>
+                        <input type="hidden" name="shopLat" id="shopLat">
+                        <input type="hidden" name="shopLng" id="shopLng">
+                        <input type="hidden" name="shopAddressVerified" id="shopAddressVerified" value="0">
                     </div>
 
                     <div class="form-group">
@@ -115,66 +392,136 @@
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
-                            <label>Profile Photo</label>
-                            <div class="file-upload">
+                            <label>Profile Photo <span style="font-size:0.72rem;background:rgba(239,68,68,0.15);color:#ef4444;padding:0.1rem 0.4rem;border-radius:99px;font-weight:600;">Required</span></label>
+                            <div class="file-upload required-upload" id="mechProfilePhotoWrap">
                                 <div class="file-upload-icon">📸</div>
-                                <div class="file-upload-text">Upload photo</div>
-                                <div class="file-name" id="profilePhotoLabel">No file chosen</div>
-                                <input type="file" name="profilePhoto" id="profilePhoto" accept="image/*">
+                                <div class="file-upload-text">Upload your photo</div>
+                                <div class="file-name" id="mechProfilePhotoLabel">No file chosen</div>
+                                <input type="file" name="profilePhoto" id="mechProfilePhoto" accept="image/jpeg,image/png,image/webp">
                             </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Aadhar Card</label>
-                            <div class="file-upload">
-                                <div class="file-upload-icon">🪪</div>
-                                <div class="file-upload-text">Upload Aadhar</div>
-                                <div class="file-name" id="aadharCardLabel">No file chosen</div>
-                                <input type="file" name="aadharCard" id="aadharCard" accept="image/*">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
-                        <div class="form-group">
-                            <label>PAN Card</label>
-                            <div class="file-upload">
-                                <div class="file-upload-icon">💳</div>
-                                <div class="file-upload-text">Upload PAN</div>
-                                <div class="file-name" id="panCardLabel">No file chosen</div>
-                                <input type="file" name="panCard" id="panCard" accept="image/*">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Driving License</label>
-                            <div class="file-upload">
-                                <div class="file-upload-icon">🚗</div>
-                                <div class="file-upload-text">Upload DL</div>
-                                <div class="file-name" id="drivingLicenseLabel">No file chosen</div>
-                                <input type="file" name="drivingLicense" id="drivingLicense" accept="image/*">
-                            </div>
+                            <span class="upload-hint">JPG/PNG · max 5MB</span>
                         </div>
                         <div class="form-group">
                             <label>Shop Picture</label>
                             <div class="file-upload">
                                 <div class="file-upload-icon">🏪</div>
-                                <div class="file-upload-text">Upload Shop</div>
+                                <div class="file-upload-text">Upload shop</div>
                                 <div class="file-name" id="shopImageLabel">No file chosen</div>
-                                <input type="file" name="shopImage" id="shopImage" accept="image/*">
+                                <input type="file" name="shopImage" id="shopImage" accept="image/jpeg,image/png,image/webp">
                             </div>
+                            <span class="upload-hint">JPG/PNG · max 5MB</span>
                         </div>
                     </div>
-                </div>
 
-                <!-- Location -->
-                <div class="form-group">
-                    <label>Current Location</label>
-                    <button type="button" class="btn btn-secondary btn-block" id="getLocationBtn">📍 Get My
-                        Location</button>
-                    <input type="hidden" name="lat" id="lat">
-                    <input type="hidden" name="lng" id="lng">
-                </div>
+                    <!-- ── Identity Verification Section ── -->
+                    <div class="id-verify-section">
+                        <div class="id-verify-header">
+                            <span>🪪</span>
+                            <h3>Identity Verification</h3>
+                            <span style="margin-left:auto;font-size:0.75rem;color:#94a3b8;">Names must match across documents</span>
+                        </div>
+                        <div class="id-verify-body">
 
-                <button type="submit" class="btn btn-primary btn-block btn-lg mt-2">Create Account</button>
+                            <!-- Aadhaar -->
+                            <div class="id-doc-card">
+                                <div class="id-doc-title">
+                                    <span>🪪</span> Aadhaar Card
+                                    <span class="badge-req">Required</span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <div class="form-group" style="margin-bottom:0;">
+                                        <label for="aadhaarName">Name on Aadhaar *</label>
+                                        <input type="text" class="form-control" id="aadhaarName" name="aadhaarName"
+                                            placeholder="As printed on card" required>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom:0;">
+                                        <label for="aadhaarDob">Date of Birth *</label>
+                                        <input type="date" class="form-control" id="aadhaarDob" name="aadhaarDob" required>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 0.85rem;">
+                                    <label>Upload Aadhaar Image *</label>
+                                    <div class="file-upload">
+                                        <div class="file-upload-icon">🪪</div>
+                                        <div class="file-upload-text">Upload Aadhaar Card</div>
+                                        <div class="file-name" id="aadharCardMechLabel">No file chosen</div>
+                                        <input type="file" name="aadharCard" id="aadharCardMech" accept="image/*">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Driving License -->
+                            <div class="id-doc-card">
+                                <div class="id-doc-title">
+                                    <span>🚗</span> Driving License
+                                    <span class="badge-req">Required</span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <div class="form-group" style="margin-bottom:0;">
+                                        <label for="licenseName">Name on License *</label>
+                                        <input type="text" class="form-control" id="licenseName" name="licenseName"
+                                            placeholder="As printed on license" required>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom:0;">
+                                        <label for="licenseDob">Date of Birth *</label>
+                                        <input type="date" class="form-control" id="licenseDob" name="licenseDob" required>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 0.85rem;">
+                                    <label>Upload DL Image *</label>
+                                    <div class="file-upload">
+                                        <div class="file-upload-icon">🚗</div>
+                                        <div class="file-upload-text">Upload Driving License</div>
+                                        <div class="file-name" id="drivingLicenseLabel">No file chosen</div>
+                                        <input type="file" name="drivingLicense" id="drivingLicense" accept="image/*">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- PAN Card -->
+                            <div class="id-doc-card">
+                                <div class="id-doc-title">
+                                    <span>💳</span> PAN Card
+                                    <span class="badge-opt">Optional</span>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0.85rem;">
+                                    <label for="panNumber">PAN Number</label>
+                                    <input type="text" class="form-control" id="panNumber" name="panNumber"
+                                        placeholder="e.g., ABCDE1234F" maxlength="10"
+                                        style="text-transform:uppercase;">
+                                </div>
+                                <div>
+                                    <label>Upload PAN Card Image</label>
+                                    <div class="file-upload">
+                                        <div class="file-upload-icon">💳</div>
+                                        <div class="file-upload-text">Upload PAN Card</div>
+                                        <div class="file-name" id="panCardLabel">No file chosen</div>
+                                        <input type="file" name="panCard" id="panCard" accept="image/*">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mismatch / Match alerts -->
+                            <div class="id-mismatch-alert" id="idMismatchAlert">
+                                <span>⚠️</span>
+                                <div id="idMismatchText"></div>
+                            </div>
+                            <div class="id-match-ok" id="idMatchOk">
+                                <span>✅</span> Identity details match — verification will be approved.
+                            </div>
+                        </div>
+                    </div><!-- /id-verify-section -->
+
+                    <!-- Location capture -->
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label>Current Location</label>
+                        <button type="button" class="btn btn-secondary btn-block" id="getLocationBtn">📍 Get My Location</button>
+                        <input type="hidden" name="lat" id="mechLat">
+                        <input type="hidden" name="lng" id="mechLng">
+                    </div>
+                </div><!-- /mechanicFields -->
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg mt-2" id="submitBtn">Create Account</button>
             </form>
 
             <div class="auth-footer">
@@ -186,5 +533,4 @@
     <script src="js/common.js"></script>
     <script src="js/auth.js"></script>
 </body>
-
 </html>

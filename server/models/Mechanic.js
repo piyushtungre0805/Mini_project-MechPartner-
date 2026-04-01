@@ -23,6 +23,22 @@ const mechanicSchema = new mongoose.Schema({
     },
     role: { type: String, default: 'mechanic' },
     isBanned: { type: Boolean, default: false },
+
+    // Identity Verification
+    verificationStatus: {
+        type: String,
+        enum: ['pending', 'verified', 'unverified'],
+        default: 'pending'
+    },
+    verificationData: {
+        aadhaarName: { type: String, default: '' },
+        aadhaarDob:  { type: String, default: '' },
+        licenseName: { type: String, default: '' },
+        licenseDob:  { type: String, default: '' },
+        panNumber:   { type: String, default: '' },
+        mismatchReason: { type: String, default: '' }
+    },
+
     createdAt: { type: Date, default: Date.now }
 });
 
