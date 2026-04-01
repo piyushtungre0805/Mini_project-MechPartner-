@@ -152,19 +152,22 @@ function openRequestModal(mechanicId, mechanicName) {
             btn.textContent = 'Submitting...';
 
             try {
+                // Get user location for the request (used for auto-forwarding to nearest mechanic)
+                const loc = await getUserLocation();
+                
                 const mechanicId = document.getElementById('requestMechanicId').value;
                 const issue = document.getElementById('issueDescription').value;
 
                 await apiRequest('/request-service', {
                     method: 'POST',
-                    body: JSON.stringify({ mechanicId, issue })
+                    body: JSON.stringify({ mechanicId, issue, lat: loc.lat, lng: loc.lng })
                 });
 
                 showToast('Service request sent successfully!', 'success');
                 closeRequestModal();
                 document.getElementById('issueDescription').value = '';
             } catch (error) {
-                showToast(error.message, 'error');
+                showToast(error.message || 'Failed to get location or send request.', 'error');
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Submit Request';

@@ -6,6 +6,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mechanic Dashboard — MechPartner</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Request Sidebar Styles */
+        .dashboard-layout { position: relative; }
+        .with-right-sidebar { margin-right: 320px; }
+        .request-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 320px;
+            height: 100vh;
+            background: var(--bg-card);
+            border-left: 1px solid var(--border);
+            z-index: 90;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -4px 0 24px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+        }
+        .rs-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(0,0,0,0));
+        }
+        .rs-header h3 { font-size: 1.05rem; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+        .rs-badge {
+            background: var(--primary);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 99px;
+            display: none;
+        }
+        .rs-badge.visible { display: inline-block; animation: pulse 2s infinite; }
+        .rs-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            background: var(--bg);
+        }
+        .req-card {
+            background: var(--bg-panel);
+            border: 1.5px solid var(--primary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(99,102,241,0.15);
+            animation: slideInRight 0.3s ease-out;
+        }
+        .req-card h4 { margin: 0 0 0.25rem 0; font-size: 0.95rem; }
+        .req-card p { font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 0.85rem 0; line-height: 1.4; }
+        .req-actions { display: flex; gap: 0.5rem; }
+        
+        @media (max-width: 1024px) {
+            .with-right-sidebar { margin-right: 0; }
+            .request-sidebar { transform: translateX(100%); }
+            .request-sidebar.open { transform: translateX(0); }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
 </head>
 
 <body data-page="mechanic-dashboard">
@@ -13,7 +79,21 @@
         <aside class="sidebar" id="sidebar"></aside>
         <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
 
-        <main class="main-content">
+        <!-- New Request Sidebar for auto-matching -->
+        <aside class="request-sidebar" id="requestSidebar">
+            <div class="rs-header">
+                <h3>🔔 Incoming Requests</h3>
+                <span class="rs-badge" id="rsBadge">0</span>
+            </div>
+            <div class="rs-body" id="rsBody">
+                <div class="empty-state" style="padding: 2rem 1rem;">
+                    <div class="spinner" style="margin: 0 auto 1rem; width:24px; height:24px; border-width:2px;"></div>
+                    <p style="font-size:0.85rem">Listening for requests...</p>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content with-right-sidebar">
             <div class="page-header animate-fade-in">
                 <div style="display: flex; align-items: center;">
                     <button class="btn-back" onclick="history.back()"></button>

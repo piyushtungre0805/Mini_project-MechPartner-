@@ -11,7 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ===== User Dashboard =====
+let userDashboardPollInterval;
+
 async function initUserDashboard() {
     if (!requireAuth('user')) return;
     injectSidebar('user');
@@ -20,6 +21,12 @@ async function initUserDashboard() {
     const userName = getUserName() || 'User';
     document.getElementById('welcomeName').textContent = userName;
 
+    await refreshUserDashboard();
+    userDashboardPollInterval = setInterval(refreshUserDashboard, 5000);
+}
+
+// ===== User Dashboard Refresh Logic =====
+async function refreshUserDashboard() {
     try {
         const services = await apiRequest('/user/services');
         if (services) {
@@ -27,9 +34,9 @@ async function initUserDashboard() {
             const pending = services.filter(s => s.status === 'pending').length;
             const completed = services.filter(s => s.status === 'completed').length;
 
-            document.getElementById('totalRequests').textContent = total;
-            document.getElementById('pendingRequests').textContent = pending;
-            document.getElementById('completedRequests').textContent = completed;
+            if (document.getElementById('totalRequests')) document.getElementById('totalRequests').textContent = total;
+            if (document.getElementById('pendingRequests')) document.getElementById('pendingRequests').textContent = pending;
+            if (document.getElementById('completedRequests')) document.getElementById('completedRequests').textContent = completed;
 
             // Recent requests
             const recentList = document.getElementById('recentRequests');
@@ -44,21 +51,40 @@ async function initUserDashboard() {
             </div>
           `;
                 } else {
-                    recentList.innerHTML = recent.map(s => `
+                    recentList.innerHTML = recent.map(s => {
+                        const isRejectedAndSearching = false; // Auto-forwarding disabled
+                        const isRejectedAndFailed = s.status === 'rejected'; // Just standard rejection
+                        const isAccepted = s.status === 'accepted';
+                        
+                        let mechanicNameLabel = s.mechanicId?.name || 'Mechanic';
+                        let shopDesc = s.mechanicId?.shopName || '';
+                        let badgeClass = s.status;
+                        let statusBadgeText = s.status;
+
+                        if (isRejectedAndFailed) {
+                            badgeClass = 'danger';
+                            statusBadgeText = '❌ Rejected';
+                            mechanicNameLabel = 'Mechanic rejected your request';
+                            shopDesc = 'The mechanic is currently unavailable or declined.';
+                        } else if (isAccepted) {
+                            statusBadgeText = '✅ Request accepted';
+                        }
+                        
+                        return `
             <div class="card" style="margin-bottom: 0.75rem;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                  <strong>${s.mechanicId?.name || 'Mechanic'}</strong>
-                  <p style="color: var(--text-secondary); font-size: 0.85rem;">${s.mechanicId?.shopName || ''} — ${s.issue}</p>
+                  <strong>${mechanicNameLabel}</strong>
+                  <p style="color: var(--text-secondary); font-size: 0.85rem;">${shopDesc ? shopDesc + ' — ' : ''}${s.issue}</p>
                 </div>
-                <span class="badge badge-${s.status}">${s.status}</span>
+                <span class="badge badge-${badgeClass}">${statusBadgeText}</span>
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
                 <div style="font-size: 0.8rem; color: var(--text-muted);">${formatDate(s.createdAt)}</div>
-                <button class="btn-chat" onclick="openChat('${s._id}', '${s.mechanicId?.name || 'Mechanic'}')">💬 Chat</button>
+                ${!isRejectedAndSearching ? `<button class="btn-chat" onclick="openChat('${s._id}', '${s.mechanicId?.name || 'Mechanic'}')">💬 Chat</button>` : `<span style="font-size:0.8rem;color:var(--text-muted);">Finding next available...</span>`}
               </div>
             </div>
-          `).join('');
+          `}).join('');
                 }
             }
         }
@@ -175,11 +201,18 @@ async function initUserProfile() {
 }
 
 // ===== Service History =====
+let serviceHistoryPollInterval;
+
 async function initServiceHistory() {
     if (!requireAuth('user')) return;
     injectSidebar('user');
     setActiveNav('nav-history');
 
+    await refreshServiceHistory();
+    serviceHistoryPollInterval = setInterval(refreshServiceHistory, 5000);
+}
+
+async function refreshServiceHistory() {
     const listEl = document.getElementById('serviceList');
     if (!listEl) return;
 
@@ -209,21 +242,40 @@ async function initServiceHistory() {
             </tr>
           </thead>
           <tbody>
-            ${services.map(s => `
+            ${services.map(s => {
+                const isRejectedAndSearching = false; // Auto forwarding disabled
+                const isRejectedAndFailed = s.status === 'rejected';
+                const isAccepted = s.status === 'accepted';
+                
+                let mechanicNameLabel = s.mechanicId?.name || 'N/A';
+                let shopDesc = s.mechanicId?.shopName || 'N/A';
+                let badgeClass = s.status;
+                let statusBadgeText = s.status;
+
+                if (isRejectedAndFailed) {
+                    badgeClass = 'danger';
+                    statusBadgeText = 'Rejected';
+                    mechanicNameLabel = 'Mechanic rejected your request';
+                    shopDesc = 'Declined';
+                } else if (isAccepted) {
+                    statusBadgeText = 'Request accepted';
+                }
+                
+                return `
               <tr>
-                <td><strong>${s.mechanicId?.name || 'N/A'}</strong></td>
-                <td>${s.mechanicId?.shopName || 'N/A'}</td>
+                <td><strong>${mechanicNameLabel}</strong></td>
+                <td>${shopDesc}</td>
                 <td>${s.issue}</td>
-                <td><span class="badge badge-${s.status}">${s.status}</span></td>
+                <td><span class="badge badge-${badgeClass}">${statusBadgeText}</span></td>
                 <td>${formatDate(s.createdAt)}</td>
-                <td><button class="btn-chat" onclick="openChat('${s._id}', '${s.mechanicId?.name || 'Mechanic'}')">💬</button></td>
+                <td>${(!isRejectedAndSearching && !isRejectedAndFailed) ? `<button class="btn-chat" onclick="openChat('${s._id}', '${s.mechanicId?.name || 'Mechanic'}')">💬</button>` : ''}</td>
               </tr>
-            `).join('')}
+            `}).join('')}
           </tbody>
         </table>
       </div>
     `;
     } catch (error) {
-        showToast('Failed to load service history', 'error');
+        console.error('Failed to load service history:', error);
     }
 }

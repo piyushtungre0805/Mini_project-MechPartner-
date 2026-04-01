@@ -11,15 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ===== Mechanic Dashboard =====
-async function initMechanicDashboard() {
-    if (!requireAuth('mechanic')) return;
-    injectSidebar('mechanic');
-    setActiveNav('nav-dashboard');
-
-    const userName = getUserName() || 'Mechanic';
-    document.getElementById('welcomeName').textContent = userName;
-
+async function refreshMechanicDashboard() {
     try {
         const requests = await apiRequest('/mechanic/requests');
         if (requests) {
@@ -28,12 +20,12 @@ async function initMechanicDashboard() {
             const accepted = requests.filter(r => r.status === 'accepted').length;
             const completed = requests.filter(r => r.status === 'completed').length;
 
-            document.getElementById('totalJobs').textContent = total;
-            document.getElementById('pendingJobs').textContent = pending;
-            document.getElementById('activeJobs').textContent = accepted;
-            document.getElementById('completedJobs').textContent = completed;
+            if (document.getElementById('totalJobs')) document.getElementById('totalJobs').textContent = total;
+            if (document.getElementById('pendingJobs')) document.getElementById('pendingJobs').textContent = pending;
+            if (document.getElementById('activeJobs')) document.getElementById('activeJobs').textContent = accepted;
+            if (document.getElementById('completedJobs')) document.getElementById('completedJobs').textContent = completed;
 
-            // Recent requests
+            // Recent requests (show only non-pending in main body if desired, or all)
             const recentList = document.getElementById('recentJobs');
             if (recentList) {
                 const recent = requests.slice(0, 5);
@@ -63,9 +55,81 @@ async function initMechanicDashboard() {
           `).join('');
                 }
             }
+
+            // Update Sidebar automatically
+            renderRequestSidebar(requests.filter(r => r.status === 'pending'));
         }
     } catch (error) {
         console.error('Dashboard error:', error);
+    }
+}
+
+let dashboardPollInterval;
+
+// Starts polling and initial fetches
+async function initMechanicDashboard() {
+    if (!requireAuth('mechanic')) return;
+    injectSidebar('mechanic');
+    setActiveNav('nav-dashboard');
+
+    const userName = getUserName() || 'Mechanic';
+    document.getElementById('welcomeName').textContent = userName;
+
+    await refreshMechanicDashboard();
+
+    // Poll every 5s for real-time request incoming effect
+    dashboardPollInterval = setInterval(refreshMechanicDashboard, 5000);
+}
+
+// Dedicated function to render requests in the new Request Sidebar
+function renderRequestSidebar(pendingReqs) {
+    const rsBody = document.getElementById('rsBody');
+    const rsBadge = document.getElementById('rsBadge');
+    
+    if (!rsBody || !rsBadge) return;
+
+    if (pendingReqs.length > 0) {
+        rsBadge.textContent = pendingReqs.length;
+        rsBadge.classList.add('visible');
+        
+        rsBody.innerHTML = pendingReqs.map(r => `
+            <div class="req-card">
+                <div style="display: flex; justify-content: space-between;">
+                    <h4>${r.userId?.name || 'Customer'}</h4>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">${formatDate(r.createdAt).split(' ')[1]}</span>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">📍 ${r.userId?.address || 'Location provided'}</div>
+                <p><strong>Issue:</strong> ${r.issue}</p>
+                <div class="req-actions">
+                    <button class="btn btn-success btn-sm btn-block" onclick="updateSidebarRequestStatus('${r._id}', 'accepted')">✅ Accept</button>
+                    <button class="btn btn-danger btn-sm btn-block" onclick="updateSidebarRequestStatus('${r._id}', 'rejected')">❌ Reject</button>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        rsBadge.classList.remove('visible');
+        rsBody.innerHTML = `
+            <div class="empty-state" style="padding: 2rem 1rem;">
+                <div class="spinner" style="margin: 0 auto 1rem; width:24px; height:24px; border-width:2px;"></div>
+                <p style="font-size:0.85rem">Listening for requests...</p>
+            </div>
+        `;
+    }
+}
+
+async function updateSidebarRequestStatus(id, status) {
+    try {
+        await apiRequest(`/service/${id}/status`, {
+            method: 'PUT',
+            body: JSON.stringify({ status })
+        });
+        showToast(`Request ${status}!`, 'success');
+        refreshMechanicDashboard();
+        if (typeof loadJobRequests === 'function' && document.body.dataset.page === 'job-requests') {
+            loadJobRequests();
+        }
+    } catch (error) {
+        showToast(error.message, 'error');
     }
 }
 
@@ -240,7 +304,7 @@ async function loadJobRequests() {
         ${r.status === 'pending' ? `
           <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
             <button class="btn btn-success btn-sm" onclick="updateRequestStatus('${r._id}', 'accepted')">✓ Accept</button>
-            <button class="btn btn-danger btn-sm" onclick="updateRequestStatus('${r._id}', 'cancelled')">✕ Decline</button>
+            <button class="btn btn-danger btn-sm" onclick="updateRequestStatus('${r._id}', 'rejected')">✕ Reject</button>
           </div>
         ` : ''}
         ${r.status === 'accepted' ? `
@@ -263,7 +327,11 @@ async function updateRequestStatus(requestId, status) {
             body: JSON.stringify({ status })
         });
         showToast(`Request ${status}!`, 'success');
-        await loadJobRequests();
+        if (typeof refreshMechanicDashboard === 'function' && document.body.dataset.page === 'mechanic-dashboard') {
+            refreshMechanicDashboard();
+        } else if (typeof loadJobRequests === 'function') {
+            await loadJobRequests();
+        }
     } catch (error) {
         showToast(error.message, 'error');
     }

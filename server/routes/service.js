@@ -8,10 +8,10 @@ const { auth, mechanicOnly, userOnly } = require('../middleware/auth');
 // POST /api/request-service
 router.post('/request-service', auth, userOnly, async (req, res) => {
     try {
-        const { mechanicId, issue } = req.body;
+        const { mechanicId, issue, lat, lng } = req.body;
 
-        if (!mechanicId || !issue) {
-            return res.status(400).json({ message: 'Mechanic ID and issue description are required' });
+        if (!mechanicId || !issue || lat === undefined || lng === undefined) {
+            return res.status(400).json({ message: 'Mechanic ID, issue description, lat, and lng are required' });
         }
 
         const mechanic = await Mechanic.findById(mechanicId);
@@ -22,7 +22,11 @@ router.post('/request-service', auth, userOnly, async (req, res) => {
         const serviceRequest = new ServiceRequest({
             userId: req.user.id,
             mechanicId,
-            issue
+            issue,
+            location: {
+                type: 'Point',
+                coordinates: [parseFloat(lng), parseFloat(lat)]
+            }
         });
 
         await serviceRequest.save();
@@ -65,21 +69,28 @@ router.get('/mechanic/requests', auth, mechanicOnly, async (req, res) => {
 router.put('/service/:id/status', auth, mechanicOnly, async (req, res) => {
     try {
         const { status } = req.body;
-        const validStatuses = ['accepted', 'completed', 'cancelled'];
+        const validStatuses = ['accepted', 'completed', 'cancelled', 'rejected'];
 
         if (!validStatuses.includes(status)) {
             return res.status(400).json({ message: 'Invalid status' });
         }
 
-        const serviceRequest = await ServiceRequest.findOneAndUpdate(
-            { _id: req.params.id, mechanicId: req.user.id },
-            { status },
-            { new: true }
-        ).populate('userId', 'name phone email address');
+        let serviceRequest = await ServiceRequest.findOne({ _id: req.params.id, mechanicId: req.user.id });
 
         if (!serviceRequest) {
             return res.status(404).json({ message: 'Service request not found' });
         }
+
+        if (status === 'rejected') {
+            serviceRequest.rejectedBy.push(req.user.id);
+            serviceRequest.status = 'rejected';
+        } else {
+            // Normal status update
+            serviceRequest.status = status;
+        }
+
+        await serviceRequest.save();
+        serviceRequest = await ServiceRequest.findById(serviceRequest._id).populate('userId', 'name phone email address');
 
         res.json(serviceRequest);
     } catch (error) {
